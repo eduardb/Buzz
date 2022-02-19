@@ -2,19 +2,40 @@
 buildscript {
     // Can upgrade to 1.6 once Moshi releases an update
     // See: https://github.com/square/moshi/issues/1429
-    ext.kotlin_version = "1.5.31"
+    ext.kotlin_version = "1.6.10"
     repositories {
         google()
         mavenCentral()
-        jcenter()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:7.0.3"
+        classpath 'com.android.tools.build:gradle:7.1.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.google.dagger:hilt-android-gradle-plugin:2.40.1"
+        classpath "com.google.dagger:hilt-android-gradle-plugin:2.41"
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
+    }
+}
+
+plugins {
+    id "com.github.ben-manes.versions" version "0.42.0"
+}
+
+def isNonStable = { String version ->
+    def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
+    def regex = /^[0-9,.v-]+(-r)?$/
+    return !stableKeyword && !(version ==~ regex)
+}
+
+dependencyUpdates {
+    resolutionStrategy {
+        componentSelection {
+            all {
+                if (isNonStable(candidate.version) && !isNonStable(currentVersion)) {
+                    reject('Release candidate')
+                }
+            }
+        }
     }
 }
 
@@ -22,7 +43,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter()
     }
 }
 
