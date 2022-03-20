@@ -14,6 +14,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.LiveHelp
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -40,8 +41,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import io.github.plastix.buzz.LiveHints
 import io.github.plastix.buzz.PuzzleRanking
 import io.github.plastix.buzz.R
+import io.github.plastix.buzz.solveLiveHints
 import io.github.plastix.buzz.theme.BuzzTheme
 import io.github.plastix.buzz.util.CustomDialog
 import kotlinx.coroutines.delay
@@ -73,6 +76,13 @@ fun PuzzleDetailUi(
                         }
                     },
                     actions = {
+                        IconButton(onClick = viewModel::liveHints) {
+                            Icon(
+                                imageVector = Icons.Outlined.LiveHelp,
+                                contentDescription = stringResource(R.string.puzzle_detail_toolbar_live_hints)
+                            )
+                        }
+
                         IconButton(onClick = viewModel::infoIconClicked) {
                             Icon(
                                 imageVector = Icons.Outlined.Info,
@@ -282,6 +292,68 @@ fun ShowDialog(activeDialog: Dialog) {
         is Dialog.ConfirmReset -> ShowResetConfirmationDialog()
         is Dialog.InfoDialog -> InfoDialog()
         is Dialog.RankingDialog -> RankingDialog(activeDialog.maxPuzzleScore)
+        is Dialog.LiveHintsDialog -> LiveHintsDialog(activeDialog.liveHints)
+    }
+}
+
+@Composable
+fun LiveHintsDialog(liveHints: LiveHints) {
+    val viewModel = LocalViewModel.current
+    CustomDialog(
+        onDismiss = viewModel::dismissActiveDialog,
+        title = stringResource(R.string.puzzle_live_hints_dialog_title)
+    ) {
+        Text(stringResource(R.string.puzzle_live_hints_remaining_label))
+
+        val summary = buildString {
+            append(stringResource(R.string.puzzle_live_hints_remaining_words, liveHints.remainingPoints, liveHints.remainingPangrams))
+            if (liveHints.remainingPerfectPangrams > 0) {
+                append(stringResource(R.string.puzzle_live_hints_perfect_pangrams, liveHints.remainingPerfectPangrams))
+            }
+        }
+        Text(summary)
+        
+        Spacer(modifier = Modifier.size(8.dp))
+
+        Row {
+            Text("", modifier = Modifier.width(28.dp))
+            liveHints.remainingWordsCountOfLength.forEach {
+                Text(it.first.value.toString(), modifier = Modifier.width(28.dp), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            }
+            Text("Σ", modifier = Modifier.width(28.dp), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        }
+
+        liveHints.remainingWordsStartingWithLetter.forEach { letterStats ->
+            Row {
+                Text("${letterStats.letter.uppercase()}:", modifier = Modifier.width(28.dp), fontWeight = FontWeight.Bold)
+
+                liveHints.remainingWordsCountOfLength.forEach { (wl, _ ) ->
+                    val count = letterStats.remainingWordsOfLength.find { it.first.value == wl.value }?.second
+                    Text(count?.toString() ?: "-", modifier = Modifier.width(28.dp), textAlign = TextAlign.Center)
+                }
+                Text("${letterStats.totalRemainingWordsCount}", modifier = Modifier.width(28.dp), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            }
+        }
+        Row {
+            Text("Σ:", modifier = Modifier.width(28.dp), fontWeight = FontWeight.Bold)
+            liveHints.remainingWordsCountOfLength.forEach {
+                Text(it.second.toString(), modifier = Modifier.width(28.dp), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            }
+            Text(liveHints.remainingWordsCountOfLength.sumOf { it.second }.toString(), modifier = Modifier.width(28.dp), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        }
+
+        if (liveHints.twoLetterList.isNotEmpty()) {
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(stringResource(R.string.puzzle_live_hints_two_letter_list), fontWeight = FontWeight.Bold)
+        }
+        liveHints.twoLetterList.forEach { twoLetters ->
+            Row {
+                twoLetters.forEach { (letters, count) ->
+                    Text("${letters.uppercase()}-$count")
+                    Spacer(Modifier.size(8.dp))
+                }
+            }
+        }
     }
 }
 
@@ -620,6 +692,20 @@ fun PreviewDiscoveredWordBoxFullExpanded() {
     }
 }
 
+@Preview
+@Composable
+fun PreviewLiveHintsDialog() {
+    ProvideFakeViewModel {
+        LiveHintsDialog(
+            solveLiveHints(
+                pangrams = emptySet(),
+                answers = setOf("handle", "story", "rabbit", "cloud"),
+                discoveredWords = setOf("handle")
+            )
+        )
+    }
+}
+
 
 @Composable
 fun InputBox(centerLetter: Char, word: String) {
@@ -863,4 +949,3 @@ private fun ProvideFakeViewModel(block: @Composable () -> Unit) {
         block.invoke()
     }
 }
-

@@ -18,6 +18,8 @@ class EmptyDetailScreen : DetailScreen {
 
     override fun enter() {}
 
+    override fun liveHints() {}
+
     override fun dismissActiveDialog() {}
 
     override fun dismissActiveToast() {}

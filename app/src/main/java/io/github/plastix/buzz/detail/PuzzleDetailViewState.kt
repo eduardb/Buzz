@@ -1,6 +1,7 @@
 package io.github.plastix.buzz.detail
 
 import android.os.Parcelable
+import io.github.plastix.buzz.LiveHints
 import io.github.plastix.buzz.PuzzleRanking
 import io.github.plastix.buzz.WordError
 import kotlinx.parcelize.Parcelize
@@ -33,6 +34,9 @@ sealed class Dialog : Parcelable {
 
     @Parcelize
     data class RankingDialog(val maxPuzzleScore: Int) : Dialog()
+
+    @Parcelize
+    data class LiveHintsDialog(val liveHints: LiveHints) : Dialog()
 }
 
 sealed class WordToast : Parcelable {

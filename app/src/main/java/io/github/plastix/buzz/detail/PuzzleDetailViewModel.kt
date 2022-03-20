@@ -10,7 +10,6 @@ import dagger.assisted.AssistedInject
 import io.github.plastix.buzz.*
 import io.github.plastix.buzz.persistence.PuzzleRepository
 import io.github.plastix.buzz.settings.Preferences
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -203,6 +202,20 @@ class PuzzleDetailViewModel @AssistedInject constructor(
     override fun scoreBarClicked() {
         updateScreenState {
             copy(activeDialog = Dialog.RankingDialog(board.puzzle.maxScore))
+        }
+    }
+
+    override fun liveHints() {
+        updateScreenState {
+            copy(
+                activeDialog = Dialog.LiveHintsDialog(
+                    solveLiveHints(
+                        pangrams = board.puzzle.pangrams,
+                        answers = board.puzzle.answers,
+                        discoveredWords = board.gameState.discoveredWords,
+                    )
+                )
+            )
         }
     }
 

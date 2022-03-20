@@ -13,6 +13,7 @@ interface DetailScreen {
     fun dismissActiveToast()
     fun resetGame()
     fun infoIconClicked()
+    fun liveHints()
     fun scoreBarClicked()
     fun resetConfirmed()
     fun toggleWorldBox()
